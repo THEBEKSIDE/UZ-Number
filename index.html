@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1117">
+<title>UZ NUMBER — Генератор номеров</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --card: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --green: #3fb950;
+  --gold: #d29922;
+  --red: #f85149;
+  --purple: #a371f7;
+  --safe: #238636;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  z-index: 20;
+}
+.menu-btn {
+  width: 40px; height: 40px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+}
+.balance {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.balance span { font-size: 14px; color: var(--muted); }
+
+/* Side menu */
+.side-menu {
+  position: fixed;
+  top: 0; left: -280px;
+  width: 280px; height: 100%;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  z-index: 100;
+  transition: left 0.25s ease;
+  padding-top: env(safe-area-inset-top);
+  overflow-y: auto;
+}
+.side-menu.open { left: 0; }
+.side-menu h2 {
+  padding: 20px 16px 12px;
+  font-size: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.side-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 20px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+}
+.side-menu button:active { background: rgba(88,166,255,0.15); }
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+
+/* Main content */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Type selector */
+.type-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+.type-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.type-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(88,166,255,0.1);
+}
+
+/* Plate */
+.plate-container {
+  width: 100%;
+  max-width: 360px;
+  margin: 10px 0 24px;
+  perspective: 800px;
+}
+.plate {
+  background: #f0f0f0;
+  color: #111;
+  border-radius: 8px;
+  padding: 14px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  position: relative;
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  letter-spacing: 1px;
+  min-height: 70px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.plate.flip { animation: plateFlip 0.5s ease; }
+@keyframes plateFlip {
+  0% { transform: rotateY(0); }
+  50% { transform: rotateY(90deg); }
+  100% { transform: rotateY(0); }
+}
+.plate.diplomatic {
+  background: #1a5c3a;
+  color: #fff;
+}
+.plate.mvd {
+  background: #1a3a5c;
+  color: #fff;
+}
+.plate.vip {
+  background: linear-gradient(135deg, #2c1810, #4a2c1a);
+  color: #f0d080;
+  border: 2px solid #d4a017;
+}
+.plate-left {
+  font-size: 22px;
+  min-width: 36px;
+}
+.plate-center {
+  flex: 1;
+  text-align: center;
+  font-size: 26px;
+  letter-spacing: 2px;
+}
+.plate-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1.2;
+}
+.flag {
+  width: 28px;
+  height: 18px;
+  background: linear-gradient(to bottom, #0099b5 33%, #fff 33%, #fff 66%, #1eb53a 66%);
+  border: 1px solid #333;
+  margin-bottom: 2px;
+  position: relative;
+}
+.flag::after {
+  content: "★";
+  position: absolute;
+  top: 1px; left: 2px;
+  font-size: 8px;
+  color: #fff;
+}
+.plate-info {
+  text-align: center;
+  margin-top: 12px;
+  min-height: 48px;
+}
+.rarity {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.rarity.common { background: #30363d; color: #8b949e; }
+.rarity.uncommon { background: #1f6feb33; color: #58a6ff; }
+.rarity.rare { background: #23863633; color: #3fb950; }
+.rarity.epic { background: #a371f733; color: #a371f7; }
+.rarity.legendary { background: #d2992233; color: #d29922; }
+.features {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.price-tag {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-top: 8px;
+}
+
+/* Generate button */
+.gen-btn {
+  width: 100%;
+  max-width: 320px;
+  padding: 18px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #238636, #2ea043);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(46,160,67,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  margin: 16px 0;
+}
+.gen-btn:active { transform: scale(0.97); }
+.gen-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Action buttons */
+.actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+  margin-top: 8px;
+}
+.act-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.act-btn.keep { border-color: var(--green); color: var(--green); }
+.act-btn.sell { border-color: var(--gold); color: var(--gold); }
+.act-btn:disabled { opacity: 0.4; }
+
+/* Screens */
+.screen {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+.screen.active { display: flex; }
+.screen h2 {
+  font-size: 22px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.back-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+/* Collection / Safe */
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.item-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.item-card .plate-mini {
+  font-family: monospace;
+  font-size: 16px;
+  font-weight: 700;
+  background: #eee;
+  color: #111;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.item-card .meta { font-size: 13px; color: var(--muted); }
+.item-card .actions-mini { display: flex; gap: 6px; }
+.item-card button {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--border);
+  color: var(--text);
+}
+.item-card button.sell { background: var(--gold); color: #111; }
+.item-card button.safe { background: var(--safe); color: #fff; }
+
+/* Stats */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.stat-card .val { font-size: 24px; font-weight: 700; color: var(--accent); }
+.stat-card .lbl { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+/* Catalog */
+.catalog-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.catalog-item .name { font-weight: 600; margin-bottom: 4px; }
+.catalog-item .desc { font-size: 13px; color: var(--muted); }
+
+/* Settings */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.setting-row label { font-size: 15px; }
+.toggle {
+  width: 50px; height: 28px;
+  background: var(--border);
+  border-radius: 14px;
+  position: relative;
+  cursor: pointer;
+}
+.toggle.on { background: var(--green); }
+.toggle::after {
+  content: "";
+  position: absolute;
+  width: 22px; height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: left 0.2s;
+}
+.toggle.on::after { left: 25px; }
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal.show { display: flex; }
+.modal-box {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+}
+.modal-box h3 { margin-bottom: 12px; }
+.modal-box p { color: var(--muted); margin-bottom: 20px; font-size: 14px; }
+.modal-btns { display: flex; gap: 10px; }
+.modal-btns button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modal-btns .confirm { background: var(--red); color: #fff; }
+.modal-btns .cancel { background: var(--border); color: var(--text); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.3s;
+  max-width: 90%;
+  text-align: center;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 40px 20px;
+  font-size: 15px;
+}
+
+/* Market filters */
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.filters button {
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.filters button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* Protect checkbox */
+.protect-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.protect-row input { width: 18px; height: 18px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <button class="menu-btn" id="menuBtn">☰</button>
+    <div class="balance" id="balanceDisplay">0 <span>сум</span></div>
+    <div style="width:40px"></div>
+  </div>
+
+  <!-- Side menu -->
+  <div class="overlay" id="overlay"></div>
+  <div class="side-menu" id="sideMenu">
+    <h2>UZ NUMBER</h2>
+    <button data-screen="main">🏠 Главная</button>
+    <button data-screen="collection">📦 Коллекция</button>
+    <button data-screen="safe">🔒 Сейф</button>
+    <button data-screen="stats">📊 Статистика</button>
+    <button data-screen="catalog">📖 Каталог редкостей</button>
+    <button data-screen="market">🏪 Рынок</button>
+    <button data-screen="autosell">⚙️ Автопродажа</button>
+    <button data-screen="settings">⚙️ Настройки</button>
+  </div>
+
+  <!-- MAIN SCREEN -->
+  <div class="screen active" id="screen-main">
+    <div class="main">
+      <div class="type-selector">
+        <button class="type-btn active" data-type="civil">Гражданские</button>
+        <button class="type-btn" data-type="legal">Юридические</button>
+      </div>
+
+      <div class="plate-container">
+        <div class="plate" id="plate">
+          <div class="plate-left" id="plateLeft">01</div>
+          <div class="plate-center" id="plateCenter">A 000 AA</div>
+          <div class="plate-right">
+            <div class="flag"></div>
+            <div>UZ</div>
+          </div>
+        </div>
+        <div class="plate-info">
+          <div class="rarity common" id="rarityBadge">Обычный</div>
+          <div class="features" id="featuresText">Нажмите «Выбить»</div>
+          <div class="price-tag" id="priceTag">0 сум</div>
+        </div>
+      </div>
+
+      <button class="gen-btn" id="genBtn">ВЫБИТЬ</button>
+
+      <div class="actions">
+        <button class="act-btn keep" id="keepBtn" disabled>В коллекцию</button>
+        <button class="act-btn sell" id="sellBtn" disabled>Продать</button>
+      </div>
+
+      <div class="protect-row">
+        <input type="checkbox" id="protectCheck">
+        <label for="protectCheck">Защита от случайной продажи</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLLECTION -->
+  <div class="screen" id="screen-collection">
+    <button class="back-btn" data-back>← Назад</button>
+    <h2>📦 Коллекция <span id="colCount" style="font-size:14px;color:var(--muted)"></span></h2>
+    <div class="item-list" id="collectionList"></div>
+  </div>
+
+  <!-- SAFE -->
+  <div class="screen" id="screen-safe">
+    <button class="back-btn" data-back>← Назад</button>
+    <h2>🔒 Сейф <span id="safeCount" style="font-size:14px;color:var(--muted)"></span></h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:12px">Номера в сейфе нельзя случайно продать</p>
+    <div class="item-list" id="safeList"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="screen" id="screen-stats">
+    <button class="back-btn" data-back>← Назад</button>
+    <h2>📊 Статистика</h2>
+    <div class="stat-grid" id="statsGrid"></div>
+  </div>
+
+  <!-- CATALOG -->
+  <div class="screen" id="screen-catalog">
+    <button class="back-btn" data-back>← Назад</button>
+    <h2>📖 Каталог редкостей</h2>
+    <div id="catalogContent"></div>
+  </div>
+
+  <!-- MARKET -->
+  <div class="screen" id="screen-market">
+    <button class="back-btn" data-back>← Назад</button>
+    <h2>🏪 Рынок</h2>
+    <div class="filters" id="marketFilters">
+      <button class="active" data-filter="all">Все</button>
+      <button data-filter="civil">Гражданские</button>
+      <button data-filter="legal">Юридические</button>
+      <button data-filter="special">Особые</button>
+    </div>
+    <div class="item-list" id="marketList"></div>
+  </div>
+
+  <!-- AUTOSELL -->
+  <div class="screen" id="screen-autosell">
+    <button class="back-btn" data-back>← Назад</button>
+    <h2>⚙️ Автопродажа</h2>
+    <div class="setting-row">
+      <label>Включить автопродажу</label>
+      <div class="toggle" id="autoToggle"></div>
+    </div>
+    <div class="setting-row">
+      <label>Продавать обычные</label>
+      <div class="toggle on" id="autoCommon"></div>
+    </div>
+    <div class="setting-row">
+      <label>Продавать необычные</label>
+      <div class="toggle" id="autoUncommon"></div>
+    </div>
+    <div class="setting-row">
+      <label>Мин. цена продажи (сум)</label>
+      <input type="number" id="autoMinPrice" value="0" style="width:100px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);text-align:right">
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin-top:16px">Автопродажа срабатывает сразу после генерации, если номер не защищён и соответствует правилам.</p>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="screen-settings">
+    <button class="back-btn" data-back>← Назад</button>
+    <h2>⚙️ Настройки</h2>
+    <div class="setting-row">
+      <label>Звук (вибрация)</label>
+      <div class="toggle on" id="soundToggle"></div>
+    </div>
+    <div class="setting-row">
+      <label>Анимации</label>
+      <div class="toggle on" id="animToggle"></div>
+    </div>
+    <button class="act-btn" style="width:100%;margin-top:20px" id="exportBtn">📤 Экспорт сохранения</button>
+    <button class="act-btn" style="width:100%;margin-top:10px" id="importBtn">📥 Импорт сохранения</button>
+    <button class="act-btn" style="width:100%;margin-top:10px;border-color:var(--red);color:var(--red)" id="resetBtn">🗑 Сбросить прогресс</button>
+    <textarea id="exportArea" style="width:100%;height:100px;margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:12px;display:none"></textarea>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3 id="modalTitle">Подтверждение</h3>
+    <p id="modalText"></p>
+    <div class="modal-btns">
+      <button class="cancel" id="modalCancel">Отмена</button>
+      <button class="confirm" id="modalConfirm">Да</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== DATA & CONSTANTS ====================
+const REGIONS = {
+  "01":"Ташкент","10":"Ташкентская","20":"Сырдарья","25":"Джизак",
+  "30":"Самарканд","40":"Фергана","50":"Наманган","60":"Андижан",
+  "70":"Кашкадарья","75":"Сурхандарья","80":"Бухара","85":"Навои",
+  "90":"Хорезм","95":"Каракалпакстан"
+};
+const REGION_CODES = Object.keys(REGIONS);
+const LETTERS = "ABCEHKMOPTX".split(""); // common Latin letters used on plates
+
+// Probabilities (raw) → normalize to 100%
+const CIVIL_RAW = [53.77, 37.62, 8.20, 0.83, 0.03];
+const LEGAL_RAW = [65.27, 27.34, 7.07, 0.30, 0.02];
+function normalize(arr) {
+  const s = arr.reduce((a,b)=>a+b,0);
+  return arr.map(v => v/s);
+}
+const CIVIL_P = normalize(CIVIL_RAW);
+const LEGAL_P = normalize(LEGAL_RAW);
+
+const RARITY_NAMES = ["Обычный","Необычный","Редкий","Эпический","Легендарный"];
+const RARITY_CLASS = ["common","uncommon","rare","epic","legendary"];
+const BASE_PRICES = [5000, 25000, 150000, 800000, 5000000]; // сум
+
+// Special series for MVD / VIP
+const MVD_SERIES = ["VSA","VSB","VSC","VSD","VSF","VSG","VSV","PSS","TSS","TST"];
+const VIP_SERIES = ["PAA","PPP","APC","DAV"];
+const DIPLO_PREFIX = ["CMD","D","T"];
+
+// ==================== STATE ====================
+let state = {
+  balance: 100000,
+  type: "civil",
+  current: null,
+  collection: [],
+  safe: [],
+  stats: {
+    generated: 0,
+    sold: 0,
+    kept: 0,
+    totalEarned: 0,
+    byRarity: [0,0,0,0,0],
+    specials: 0
+  },
+  autosell: {
+    enabled: false,
+    common: true,
+    uncommon: false,
+    minPrice: 0
+  },
+  settings: {
+    sound: true,
+    anim: true,
+    protect: false
+  },
+  market: [] // generated offers
+};
+
+// ==================== UTILS ====================
+function rand(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+function randInt(min,max) { return Math.floor(Math.random()*(max-min+1))+min; }
+function pad(n,len=3) { return String(n).padStart(len,"0"); }
+function formatSum(n) {
+  return Math.floor(n).toLocaleString("ru-RU") + " сум";
+}
+function vibrate(ms=30) {
+  if (state.settings.sound && navigator.vibrate) navigator.vibrate(ms);
+}
+function toast(msg, ms=2200) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), ms);
+}
+function save() {
+  localStorage.setItem("uznumber_save", JSON.stringify(state));
+}
+function load() {
+  try {
+    const raw = localStorage.getItem("uznumber_save");
+    if (raw) {
+      const data = JSON.parse(raw);
+      Object.assign(state, data);
+      // ensure arrays
+      state.collection = state.collection || [];
+      state.safe = state.safe || [];
+      state.market = state.market || [];
+    }
+  } catch(e) {}
+}
+
+// ==================== GENERATION ====================
+function pickRarity(probs) {
+  const r = Math.random();
+  let acc = 0;
+  for (let i=0; i<probs.length; i++) {
+    acc += probs[i];
+    if (r <= acc) return i;
+  }
+  return 0;
+}
+
+function generateNumber(type) {
+  const region = rand(REGION_CODES);
+  const rarity = pickRarity(type === "civil" ? CIVIL_P : LEGAL_P);
+  let digits, letters, series, special = [];
+  let isMVD = false, isDiplo = false, isVIP = false;
+  let displayLeft = region;
+  let displayCenter = "";
+  let plateClass = "";
+
+  // Base generation
+  if (type === "civil") {
+    // 01 A123BC
+    const L1 = rand(LETTERS);
+    digits = pad(randInt(0,999));
+    const L2 = rand(LETTERS);
+    const L3 = rand(LETTERS);
+    letters = L1 + digits + L2 + L3;
+    displayCenter = `${L1} ${digits} ${L2}${L3}`;
+  } else {
+    // 01 123ABC
+    digits = pad(randInt(0,999));
+    const L1 = rand(LETTERS);
+    const L2 = rand(LETTERS);
+    const L3 = rand(LETTERS);
+    letters = digits + L1 + L2 + L3;
+    displayCenter = `${digits} ${L1}${L2}${L3}`;
+  }
+
+  // Features based on rarity + random
+  const r = Math.random();
+
+  // Triple digits
+  if (rarity >= 2 || Math.random() < 0.08) {
+    const d = randInt(0,9);
+    digits = String(d)+d+d;
+    if (type === "civil") {
+      displayCenter = displayCenter.replace(/\d{3}/, digits);
+    } else {
+      displayCenter = displayCenter.replace(/\d{3}/, digits);
+    }
+    special.push("3 одинаковые цифры");
+  }
+
+  // Triple letters (for legal more natural)
+  if ((type === "legal" && (rarity >= 2 || Math.random() < 0.06)) ||
+      (type === "civil" && rarity >= 3 && Math.random() < 0.4)) {
+    const L = rand(LETTERS);
+    if (type === "civil") {
+      // last two + first
+      displayCenter = displayCenter.replace(/([A-Z]) (\d{3}) ([A-Z])([A-Z])/, `${L} $2 ${L}${L}`);
+    } else {
+      displayCenter = displayCenter.replace(/(\d{3}) ([A-Z])([A-Z])([A-Z])/, `$1 ${L}${L}${L}`);
+    }
+    special.push("3 одинаковые буквы");
+  }
+
+  // MVD
+  if (rarity >= 3 && Math.random() < 0.35) {
+    isMVD = true;
+    const ser = rand(MVD_SERIES);
+    if (type === "legal") {
+      displayCenter = `${digits} ${ser}`;
+    } else {
+      displayCenter = `${ser[0]} ${digits} ${ser.slice(1)}`;
+    }
+    special.push("МВД / спецсерия");
+    plateClass = "mvd";
+  }
+
+  // VIP
+  if (rarity >= 4 && Math.random() < 0.4) {
+    isVIP = true;
+    const ser = rand(VIP_SERIES);
+    displayLeft = "";
+    displayCenter = `${ser} ${digits}`;
+    special.push("VIP / гос. органы");
+    plateClass = "vip";
+  }
+
+  // Diplomatic (very rare)
+  if (rarity >= 4 && Math.random() < 0.25) {
+    isDiplo = true;
+    const pref = rand(DIPLO_PREFIX);
+    const code = pad(randInt(1,36),3);
+    displayLeft = "";
+    displayCenter = `${pref} ${code}${randInt(0,9)}`;
+    special.push("Дипломатический");
+    plateClass = "diplomatic";
+  }
+
+  // Price calculation
+  let price = BASE_PRICES[rarity];
+  if (special.includes("3 одинаковые цифры")) price *= 1.8;
+  if (special.includes("3 одинаковые буквы")) price *= 2.2;
+  if (isMVD) price *= 3.5;
+  if (isVIP) price *= 8;
+  if (isDiplo) price *= 12;
+  // region bonus (Tashkent higher)
+  if (region === "01") price *= 1.4;
+  price = Math.floor(price * (0.85 + Math.random()*0.3));
+
+  return {
+    id: Date.now() + Math.random().toString(36).slice(2,7),
+    type,
+    region,
+    regionName: REGIONS[region] || region,
+    displayLeft: displayLeft || "—",
+    displayCenter,
+    rarity,
+    rarityName: RARITY_NAMES[rarity],
+    special,
+    price,
+    plateClass,
+    isMVD, isDiplo, isVIP,
+    created: Date.now()
+  };
+}
+
+// ==================== UI UPDATE ====================
+function updateBalance() {
+  document.getElementById("balanceDisplay").innerHTML =
+    formatSum(state.balance).replace(" сум", "") + ' <span>сум</span>';
+}
+
+function showPlate(num) {
+  const plate = document.getElementById("plate");
+  plate.className = "plate " + (num.plateClass || "");
+  if (state.settings.anim) {
+    plate.classList.add("flip");
+    setTimeout(()=>plate.classList.remove("flip"), 500);
+  }
+  document.getElementById("plateLeft").textContent = num.displayLeft;
+  document.getElementById("plateCenter").textContent = num.displayCenter;
+  const badge = document.getElementById("rarityBadge");
+  badge.textContent = num.rarityName;
+  badge.className = "rarity " + RARITY_CLASS[num.rarity];
+  document.getElementById("featuresText").textContent =
+    num.special.length ? num.special.join(" • ") : (num.regionName || "");
+  document.getElementById("priceTag").textContent = formatSum(num.price);
+}
+
+function setCurrent(num) {
+  state.current = num;
+  showPlate(num);
+  document.getElementById("keepBtn").disabled = false;
+  document.getElementById("sellBtn").disabled = false;
+}
+
+// ==================== ACTIONS ====================
+function doGenerate() {
+  const num = generateNumber(state.type);
+  state.stats.generated++;
+  state.stats.byRarity[num.rarity]++;
+  if (num.special.length) state.stats.specials++;
+  setCurrent(num);
+  vibrate(40);
+
+  // Autosell
+  if (state.autosell.enabled) {
+    const canAuto =
+      (num.rarity === 0 && state.autosell.common) ||
+      (num.rarity === 1 && state.autosell.uncommon);
+    if (canAuto && num.price >= state.autosell.minPrice && !state.settings.protect) {
+      setTimeout(() => doSell(true), 400);
+      return;
+    }
+  }
+  save();
+}
+
+function doKeep() {
+  if (!state.current) return;
+  state.collection.unshift(state.current);
+  state.stats.kept++;
+  toast("Номер добавлен в коллекцию");
+  state.current = null;
+  document.getElementById("keepBtn").disabled = true;
+  document.getElementById("sellBtn").disabled = true;
+  save();
+}
+
+function doSell(auto=false) {
+  if (!state.current) return;
+  if (state.settings.protect && !auto) {
+    showModal("Продать номер?", `Вы получите ${formatSum(state.current.price)}`, () => {
+      finishSell();
+    });
+    return;
+  }
+  finishSell(auto);
+}
+
+function finishSell(auto=false) {
+  const price = state.current.price;
+  state.balance += price;
+  state.stats.sold++;
+  state.stats.totalEarned += price;
+  updateBalance();
+  toast((auto ? "Автопродажа: " : "Продано за ") + formatSum(price));
+  state.current = null;
+  document.getElementById("keepBtn").disabled = true;
+  document.getElementById("sellBtn").disabled = true;
+  save();
+}
+
+// ==================== SCREENS ====================
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-" + id).classList.add("active");
+  closeMenu();
+  if (id === "collection") renderCollection();
+  if (id === "safe") renderSafe();
+  if (id === "stats") renderStats();
+  if (id === "catalog") renderCatalog();
+  if (id === "market") renderMarket();
+  if (id === "autosell") renderAutosell();
+  if (id === "settings") renderSettings();
+}
+
+function closeMenu() {
+  document.getElementById("sideMenu").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+}
+
+function renderCollection() {
+  const list = document.getElementById("collectionList");
+  document.getElementById("colCount").textContent = `(${state.collection.length})`;
+  if (!state.collection.length) {
+    list.innerHTML = '<div class="empty">Коллекция пуста. Выбивайте номера и сохраняйте их!</div>';
+    return;
+  }
+  list.innerHTML = state.collection.map((n,i) => `
+    <div class="item-card">
+      <div>
+        <div class="plate-mini">${n.displayLeft} ${n.displayCenter}</div>
+        <div class="meta">${n.rarityName} • ${formatSum(n.price)}</div>
+      </div>
+      <div class="actions-mini">
+        <button class="safe" onclick="moveToSafe(${i})">🔒</button>
+        <button class="sell" onclick="sellFromCollection(${i})">💰</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderSafe() {
+  const list = document.getElementById("safeList");
+  document.getElementById("safeCount").textContent = `(${state.safe.length})`;
+  if (!state.safe.length) {
+    list.innerHTML = '<div class="empty">Сейф пуст</div>';
+    return;
+  }
+  list.innerHTML = state.safe.map((n,i) => `
+    <div class="item-card">
+      <div>
+        <div class="plate-mini">${n.displayLeft} ${n.displayCenter}</div>
+        <div class="meta">${n.rarityName} • ${formatSum(n.price)}</div>
+      </div>
+      <div class="actions-mini">
+        <button onclick="removeFromSafe(${i})">📤</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function moveToSafe(i) {
+  const n = state.collection.splice(i,1)[0];
+  state.safe.unshift(n);
+  toast("Перемещено в сейф");
+  renderCollection();
+  save();
+}
+function removeFromSafe(i) {
+  const n = state.safe.splice(i,1)[0];
+  state.collection.unshift(n);
+  toast("Возвращено в коллекцию");
+  renderSafe();
+  save();
+}
+function sellFromCollection(i) {
+  const n = state.collection[i];
+  if (state.settings.protect) {
+    showModal("Продать номер?", `Вы получите ${formatSum(n.price)}`, () => {
+      state.collection.splice(i,1);
+      state.balance += n.price;
+      state.stats.sold++;
+      state.stats.totalEarned += n.price;
+      updateBalance();
+      toast("Продано за " + formatSum(n.price));
+      renderCollection();
+      save();
+    });
+  } else {
+    state.collection.splice(i,1);
+    state.balance += n.price;
+    state.stats.sold++;
+    state.stats.totalEarned += n.price;
+    updateBalance();
+    toast("Продано за " + formatSum(n.price));
+    renderCollection();
+    save();
+  }
+}
+
+function renderStats() {
+  const s = state.stats;
+  document.getElementById("statsGrid").innerHTML = `
+    <div class="stat-card"><div class="val">${s.generated}</div><div class="lbl">Сгенерировано</div></div>
+    <div class="stat-card"><div class="val">${s.sold}</div><div class="lbl">Продано</div></div>
+    <div class="stat-card"><div class="val">${s.kept}</div><div class="lbl">Сохранено</div></div>
+    <div class="stat-card"><div class="val">${s.specials}</div><div class="lbl">Особых</div></div>
+    <div class="stat-card"><div class="val">${formatSum(s.totalEarned).replace(" сум","")}</div><div class="lbl">Заработано</div></div>
+    <div class="stat-card"><div class="val">${state.collection.length + state.safe.length}</div><div class="lbl">В коллекции</div></div>
+    ${RARITY_NAMES.map((name,i)=>`
+      <div class="stat-card"><div class="val">${s.byRarity[i]||0}</div><div class="lbl">${name}</div></div>
+    `).join("")}
+  `;
+}
+
+function renderCatalog() {
+  document.getElementById("catalogContent").innerHTML = `
+    <div class="catalog-item">
+      <div class="name">Обычный (≈54% / 65%)</div>
+      <div class="desc">Самые частые номера. Цена от 5 000 сум.</div>
+    </div>
+    <div class="catalog-item">
+      <div class="name">Необычный (≈38% / 27%)</div>
+      <div class="desc">Чуть красивее комбинации. Цена от 25 000 сум.</div>
+    </div>
+    <div class="catalog-item">
+      <div class="name">Редкий (≈8% / 7%)</div>
+      <div class="desc">Часто с повторяющимися цифрами или буквами. От 150 000 сум.</div>
+    </div>
+    <div class="catalog-item">
+      <div class="name">Эпический (≈0.8% / 0.3%)</div>
+      <div class="desc">МВД-серии, тройки, красивые сочетания. От 800 000 сум.</div>
+    </div>
+    <div class="catalog-item">
+      <div class="name">Легендарный (≈0.03% / 0.02%)</div>
+      <div class="desc">VIP, дипломатические, идеальные комбинации. От 5 000 000 сум.</div>
+    </div>
+    <div class="catalog-item">
+      <div class="name">Доп. особенности</div>
+      <div class="desc">• 3 одинаковые цифры<br>• 3 одинаковые буквы<br>• МВД / спецсерии (VSx, PSS…)<br>• VIP (PAA, PPP, DAV…)<br>• Дипломатические (CMD, D, T) — зелёный фон</div>
+    </div>
+    <div class="catalog-item">
+      <div class="name">Форматы</div>
+      <div class="desc">Гражданские: 01 A123BC<br>Юридические: 01 123ABC<br>Регионы: 01–09 Ташкент, 10–19 Ташкентская обл. и т.д.</div>
+    </div>
+  `;
+}
+
+function renderMarket() {
+  // Generate some offers if empty
+  if (state.market.length < 5) {
+    for (let i=0; i<8; i++) {
+      const t = Math.random() > 0.5 ? "civil" : "legal";
+      const n = generateNumber(t);
+      n.marketPrice = Math.floor(n.price * (0.7 + Math.random()*0.5));
+      state.market.push(n);
+    }
+    save();
+  }
+  const filter = document.querySelector("#marketFilters .active")?.dataset.filter || "all";
+  let items = state.market;
+  if (filter === "civil") items = items.filter(n => n.type === "civil");
+  if (filter === "legal") items = items.filter(n => n.type === "legal");
+  if (filter === "special") items = items.filter(n => n.special.length || n.rarity >= 3);
+
+  const list = document.getElementById("marketList");
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">Нет предложений</div>';
+    return;
+  }
+  list.innerHTML = items.map((n,i) => {
+    const realIdx = state.market.indexOf(n);
+    return `
+    <div class="item-card">
+      <div>
+        <div class="plate-mini">${n.displayLeft} ${n.displayCenter}</div>
+        <div class="meta">${n.rarityName} • ${n.type === "civil" ? "Гражд." : "Юрид."}</div>
+      </div>
+      <div class="actions-mini">
+        <button class="sell" onclick="buyFromMarket(${realIdx})">${formatSum(n.marketPrice)}</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function buyFromMarket(i) {
+  const n = state.market[i];
+  if (state.balance < n.marketPrice) {
+    toast("Недостаточно средств");
+    return;
+  }
+  state.balance -= n.marketPrice;
+  state.collection.unshift(n);
+  state.market.splice(i,1);
+  updateBalance();
+  toast("Куплено!");
+  renderMarket();
+  save();
+}
+
+function renderAutosell() {
+  document.getElementById("autoToggle").classList.toggle("on", state.autosell.enabled);
+  document.getElementById("autoCommon").classList.toggle("on", state.autosell.common);
+  document.getElementById("autoUncommon").classList.toggle("on", state.autosell.uncommon);
+  document.getElementById("autoMinPrice").value = state.autosell.minPrice;
+}
+
+function renderSettings() {
+  document.getElementById("soundToggle").classList.toggle("on", state.settings.sound);
+  document.getElementById("animToggle").classList.toggle("on", state.settings.anim);
+  document.getElementById("protectCheck").checked = state.settings.protect;
+}
+
+// ==================== MODAL ====================
+let modalCallback = null;
+function showModal(title, text, cb) {
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("modalText").textContent = text;
+  document.getElementById("modal").classList.add("show");
+  modalCallback = cb;
+}
+function hideModal() {
+  document.getElementById("modal").classList.remove("show");
+  modalCallback = null;
+}
+
+// ==================== EVENTS ====================
+document.getElementById("menuBtn").onclick = () => {
+  document.getElementById("sideMenu").classList.add("open");
+  document.getElementById("overlay").classList.add("show");
+};
+document.getElementById("overlay").onclick = closeMenu;
+
+document.querySelectorAll(".side-menu button").forEach(btn => {
+  btn.onclick = () => showScreen(btn.dataset.screen);
+});
+document.querySelectorAll("[data-back]").forEach(btn => {
+  btn.onclick = () => showScreen("main");
+});
+
+document.querySelectorAll(".type-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.type = btn.dataset.type;
+  };
+});
+
+document.getElementById("genBtn").onclick = doGenerate;
+document.getElementById("keepBtn").onclick = doKeep;
+document.getElementById("sellBtn").onclick = () => doSell(false);
+
+document.getElementById("protectCheck").onchange = e => {
+  state.settings.protect = e.target.checked;
+  save();
+};
+
+// Toggles
+document.getElementById("autoToggle").onclick = function() {
+  this.classList.toggle("on");
+  state.autosell.enabled = this.classList.contains("on");
+  save();
+};
+document.getElementById("autoCommon").onclick = function() {
+  this.classList.toggle("on");
+  state.autosell.common = this.classList.contains("on");
+  save();
+};
+document.getElementById("autoUncommon").onclick = function() {
+  this.classList.toggle("on");
+  state.autosell.uncommon = this.classList.contains("on");
+  save();
+};
+document.getElementById("autoMinPrice").onchange = e => {
+  state.autosell.minPrice = parseInt(e.target.value) || 0;
+  save();
+};
+
+document.getElementById("soundToggle").onclick = function() {
+  this.classList.toggle("on");
+  state.settings.sound = this.classList.contains("on");
+  save();
+};
+document.getElementById("animToggle").onclick = function() {
+  this.classList.toggle("on");
+  state.settings.anim = this.classList.contains("on");
+  save();
+};
+
+// Market filters
+document.getElementById("marketFilters").onclick = e => {
+  if (e.target.tagName === "BUTTON") {
+    document.querySelectorAll("#marketFilters button").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    renderMarket();
+  }
+};
+
+// Modal
+document.getElementById("modalCancel").onclick = hideModal;
+document.getElementById("modalConfirm").onclick = () => {
+  if (modalCallback) modalCallback();
+  hideModal();
+};
+
+// Export / Import / Reset
+document.getElementById("exportBtn").onclick = () => {
+  const area = document.getElementById("exportArea");
+  area.style.display = "block";
+  area.value = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  area.select();
+  toast("Скопируйте код сохранения");
+};
+document.getElementById("importBtn").onclick = () => {
+  const area = document.getElementById("exportArea");
+  area.style.display = "block";
+  area.placeholder = "Вставьте код сохранения сюда и нажмите Импорт ещё раз";
+  if (area.value && area.value.length > 20) {
+    try {
+      const data = JSON.parse(decodeURIComponent(escape(atob(area.value.trim()))));
+      Object.assign(state, data);
+      updateBalance();
+      toast("Сохранение загружено!");
+      area.value = "";
+      area.style.display = "none";
+      save();
+    } catch(e) {
+      toast("Ошибка импорта");
+    }
+  }
+};
+document.getElementById("resetBtn").onclick = () => {
+  showModal("Сбросить прогресс?", "Весь прогресс будет удалён безвозвратно.", () => {
+    localStorage.removeItem("uznumber_save");
+    location.reload();
+  });
+};
+
+// ==================== INIT ====================
+load();
+updateBalance();
+document.getElementById("protectCheck").checked = state.settings.protect;
+
+// Prevent zoom on double tap (iOS)
+let lastTouch = 0;
+document.addEventListener("touchend", e => {
+  const now = Date.now();
+  if (now - lastTouch <= 300) e.preventDefault();
+  lastTouch = now;
+}, {passive: false});
+</script>
+</body>
+</html>
